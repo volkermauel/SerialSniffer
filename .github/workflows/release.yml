@@ -1,0 +1,33 @@
+name: build-and-release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish win-x64
+        run: dotnet publish SerialSniffer -c Release -r win-x64 --self-contained
+
+      - name: Package
+        run: |
+          zip -j SerialSniffer-win64.zip \
+            SerialSniffer/bin/Release/net8.0-windows/win-x64/publish/SerialSniffer.exe
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          generate_release_notes: true
+          files: SerialSniffer-win64.zip
